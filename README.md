@@ -1,6 +1,7 @@
 # Forkers Note
 
 I've forked this project to merge some of the pull requests made - the original project seems dead ;(
+Also, I don't plan to develop this project any further, but I'm still happy to accept merge requests and supply new releases.
 
 
 # d3.tip: Tooltips for d3.js visualizations
