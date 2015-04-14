@@ -29,39 +29,38 @@
         node      = initNode(),
         svg       = null,
         point     = null,
-        target    = null,
-        parent    = null
+        target    = null
 
     function tip(vis) {
       svg = getSVGNode(vis)
-      if (svg == null) return;
       point = svg.createSVGPoint()
+      document.body.appendChild(node)
     }
 
     // Public - show the tooltip on the screen
     //
     // Returns a tip
     tip.show = function() {
-      if(!parent) tip.parent(document.body);
       var args = Array.prototype.slice.call(arguments)
       if(args[args.length - 1] instanceof SVGElement) target = args.pop()
 
       var content = html.apply(this, args),
           poffset = offset.apply(this, args),
           dir     = direction.apply(this, args),
-          nodel   = d3.select(node),
+          nodel   = getNodeEl(),
           i       = directions.length,
           coords,
-          parentCoords = node.offsetParent.getBoundingClientRect()
+          scrollTop  = document.documentElement.scrollTop || document.body.scrollTop,
+          scrollLeft = document.documentElement.scrollLeft || document.body.scrollLeft
 
       nodel.html(content)
-        .style({ opacity: 1, 'pointer-events': 'all' })
+        .style({ opacity: 1, 'pointer-events': 'none' })
 
       while(i--) nodel.classed(directions[i], false)
       coords = direction_callbacks.get(dir).apply(this)
       nodel.classed(dir, true).style({
-        top: (coords.top + poffset[0]) - parentCoords.top + 'px',
-        left: (coords.left + poffset[1]) - parentCoords.left + 'px'
+        top: (coords.top +  poffset[0]) + scrollTop + 'px',
+        left: (coords.left + poffset[1]) + scrollLeft + 'px'
       })
 
       return tip
@@ -71,7 +70,7 @@
     //
     // Returns a tip
     tip.hide = function() {
-      var nodel = d3.select(node)
+      var nodel = getNodeEl()
       nodel.style({ opacity: 0, 'pointer-events': 'none' })
       return tip
     }
@@ -84,10 +83,10 @@
     // Returns tip or attribute value
     tip.attr = function(n, v) {
       if (arguments.length < 2 && typeof n === 'string') {
-        return d3.select(node).attr(n)
+        return getNodeEl().attr(n)
       } else {
         var args =  Array.prototype.slice.call(arguments)
-        d3.selection.prototype.attr.apply(d3.select(node), args)
+        d3.selection.prototype.attr.apply(getNodeEl(), args)
       }
 
       return tip
@@ -101,10 +100,10 @@
     // Returns tip or style property value
     tip.style = function(n, v) {
       if (arguments.length < 2 && typeof n === 'string') {
-        return d3.select(node).style(n)
+        return getNodeEl().style(n)
       } else {
         var args =  Array.prototype.slice.call(arguments)
-        d3.selection.prototype.style.apply(d3.select(node), args)
+        d3.selection.prototype.style.apply(getNodeEl(), args)
       }
 
       return tip
@@ -147,24 +146,15 @@
       return tip
     }
 
-    // Public: Sets or gets the parent of the tooltip element
+    // Public: destroys the tooltip and removes it from the DOM
     //
-    // v - New parent for the tip
-    //
-    // Returns parent element or tip
-    tip.parent = function(v) {
-      if (!arguments.length) return parent
-      parent = v || document.body
-      parent.appendChild(node)
-
-      // Make sure offsetParent has a position so the tip can be
-      // based from it. Mainly a concern with <body>.
-      var offsetParent = d3.select(node.offsetParent)
-      if (offsetParent.style('position') === 'static') {
-        offsetParent.style('position', 'relative')
+    // Returns a tip
+    tip.destroy = function() {
+      if(node) {
+        getNodeEl().remove();
+        node = null;
       }
-
-      return tip
+      return tip;
     }
 
     function d3_tip_direction() { return 'n' }
@@ -263,11 +253,19 @@
 
     function getSVGNode(el) {
       el = el.node()
-      if (el == null) return
       if(el.tagName.toLowerCase() === 'svg')
         return el
 
       return el.ownerSVGElement
+    }
+
+    function getNodeEl() {
+      if(node === null) {
+        node = initNode();
+        // re-add node to DOM
+        document.body.appendChild(node);
+      };
+      return d3.select(node);
     }
 
     // Private - gets the screen coordinates of a shape
