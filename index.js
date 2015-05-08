@@ -53,7 +53,10 @@
           scrollTop  = document.documentElement.scrollTop || document.body.scrollTop,
           scrollLeft = document.documentElement.scrollLeft || document.body.scrollLeft
 
-      nodel.html(content)
+      node.innerHTML = ''
+      node.appendChild(content)
+
+      nodel
         .style({ opacity: 1, 'pointer-events': 'all' })
 
       while(i--) nodel.classed(directions[i], false)
